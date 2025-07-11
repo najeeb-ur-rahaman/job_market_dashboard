@@ -65,5 +65,6 @@ def create_table():
         cur.close()
         conn.close()
 
-create_database()
-create_table()
+def create_database_and_table():
+    create_database()
+    create_table()

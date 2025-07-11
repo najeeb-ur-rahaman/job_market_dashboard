@@ -1,4 +1,7 @@
+import os
 from utils import *
+from db_setup import create_database_and_table
+from sqlalchemy import create_engine
 
 def process_jobs(raw_jobs):
     processed = []
@@ -27,6 +30,23 @@ def process_jobs(raw_jobs):
         })
     return processed
 
+def save_to_db(processed_jobs):
+    # Create DataFrame
+    df = pd.DataFrame(processed_jobs)
+    
+    try:
+        # Create database connection
+        engine = create_engine(
+            f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+            f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+        )
+        
+        # Save to database
+        df.to_sql('jobs', engine, if_exists='append', index=False)
+        print(f"Saved {len(df)} jobs to database")
+    except Exception as e:
+        print(f"Error: {e}")
+
 if __name__ == "__main__":
     # Fetch jobs from api_client.py
     from api_client import fetch_jobs
@@ -40,5 +60,11 @@ if __name__ == "__main__":
     
     # Save processed data
     processed_file = save_processed_data(processed_jobs)
+    
+    # call the create database and table function in the db_setup file
+    create_database_and_table()
+    
+    # load the data into the table using pandas
+    save_to_db(processed_jobs)
     
     print("Pipeline completed successfully!")
