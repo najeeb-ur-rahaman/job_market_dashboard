@@ -3,36 +3,9 @@ import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
-
-def create_database():
+def jobs_table():
     try:
-        conn = psycopg2.connect(
-            host=os.getenv('DB_HOST'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            dbname='postgres'
-        )
-        conn.autocommit = True
-        cur = conn.cursor()
-
-        # Check if DB exists
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = 'job_market_db'")
-        exists = cur.fetchone()
-
-        if not exists:
-            cur.execute("CREATE DATABASE job_market_db;")
-            print("Database created.")
-        else:
-            print("Database already exists.")
-
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        cur.close()
-        conn.close()
-
-def create_table():
-    try:
+        print(f'Connecting to Database {os.getenv('DB_NAME')} ...')
         conn = psycopg2.connect(
             host=os.getenv('DB_HOST'),
             user=os.getenv('DB_USER'),
@@ -40,6 +13,8 @@ def create_table():
             dbname=os.getenv('DB_NAME')
         )
         cur = conn.cursor()
+
+        print('Creating table jobs..')
 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS jobs (
@@ -65,6 +40,5 @@ def create_table():
         cur.close()
         conn.close()
 
-def create_database_and_table():
-    create_database()
-    create_table()
+def create_table():
+    jobs_table()
