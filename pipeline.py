@@ -1,12 +1,25 @@
 import os
 from utils import *
+from datetime import datetime
 from db_setup import create_table
 from sqlalchemy import create_engine
 
 def process_jobs(raw_jobs):
     processed = []
+    today = datetime.utcnow().date()
+
     for job in raw_jobs:
-        # Get full description if truncated
+        # Parse created date
+        created_str = job.get("created", "")
+        try:
+            created_date = datetime.strptime(created_str, "%Y-%m-%dT%H:%M:%SZ").date()
+        except (ValueError, TypeError):
+            continue  # Skip if invalid or missing date
+
+        if created_date != today:
+            continue  # Skip if not today's job
+        
+        # Handle salary estimation
         salary_min = job.get('salary_min')
         salary_max = job.get('salary_max')
 
@@ -21,7 +34,7 @@ def process_jobs(raw_jobs):
             "company": job.get("company", {}).get("display_name", ""),
             "contract_type": job.get("contract_type", "unknown"),
             "contract_time": job.get("contract_time", "unknown"),
-            "created": job.get("created", ""),
+            "created": created_str,
             "location": job.get("location", {}).get("display_name", ""),
             "category": job.get("category", {}).get("label", ""),
             "salary_min": salary_min,
