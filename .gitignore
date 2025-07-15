@@ -218,3 +218,4 @@ logs/
 __pycache__/
 *.pyc
 *.pid
+webserver_config.py
