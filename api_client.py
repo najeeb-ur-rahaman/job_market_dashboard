@@ -14,7 +14,8 @@ def fetch_jobs(pages=20):
         params = {
             "app_id": os.getenv("ADZUNA_APP_ID"),
             "app_key": os.getenv("ADZUNA_APP_KEY"),
-            "what": "data engineer",
+            "what_or": "Data Engineer Data Scientist Data Analyst, Machine Learning Engineer Business Intelligence Data Architect Database Administrator ETL Developer Analytics Engineer",
+            "max_days_old": 1,
             "results_per_page": 50
         }
 
