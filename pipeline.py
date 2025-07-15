@@ -61,7 +61,7 @@ def save_to_db(processed_jobs):
     except Exception as e:
         print(f"Error: {e}")
 
-if __name__ == "__main__":
+def main():
     # Fetch jobs from api_client.py
     print('Fetching data from Adzuna API...')
     from api_client import fetch_jobs

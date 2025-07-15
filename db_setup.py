@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 def jobs_table():
     try:
-        print(f'Connecting to Database {os.getenv('DB_NAME')} ...')
+        print(f"Connecting to Database {os.getenv('DB_NAME')} ...")
         conn = psycopg2.connect(
             host=os.getenv('DB_HOST'),
             user=os.getenv('DB_USER'),
