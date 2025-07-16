@@ -8,7 +8,7 @@ sys.path.insert(0, '/opt/airflow/project')
 
 default_args = {
     'owner': 'airflow',
-    'retries': 3,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
     'email': ['snajeebr07@gmail.com'],
     'email_on_failure': True,

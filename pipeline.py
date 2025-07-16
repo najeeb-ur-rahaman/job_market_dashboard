@@ -1,38 +1,48 @@
-import os
-from utils import *
+import logging
+from utils import get_engine
 from datetime import datetime, timedelta
 from db_setup import create_table
-from sqlalchemy import create_engine
+from sqlalchemy import Table, MetaData
+from sqlalchemy.dialects.postgresql import insert
 from skill_extractor import SkillExtractor
 
 extractor = SkillExtractor()
 
+# ------------------- Set up logging -------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# ------------------- Process Raw Jobs -------------------
 def process_jobs(raw_jobs):
     processed = []
-    yesterday = datetime.utcnow().date() -  timedelta(days=1)
+    yesterday = datetime.utcnow().date() - timedelta(days=1)
+    now = datetime.now().replace(second=0, microsecond=0)
 
     for job in raw_jobs:
-        # Parse created date
-        created_str = job.get("created", "")
         try:
+            created_str = job.get("created", "")
             created_date = datetime.strptime(created_str, "%Y-%m-%dT%H:%M:%SZ").date()
+            if created_date != yesterday:
+                continue
         except (ValueError, TypeError):
-            continue  # Skip if invalid or missing date
+            continue  # skip invalid or missing date
 
-        if created_date != yesterday:
-            continue  # Skip if not today's job
-        
-        # Handle salary estimation
         salary_min = job.get('salary_min')
         salary_max = job.get('salary_max')
 
         if salary_min is None and salary_max is not None:
-            salary_min = salary_max * 0.8  # Estimate 20% below max
+            salary_min = salary_max * 0.8
         elif salary_max is None and salary_min is not None:
-            salary_max = salary_min * 1.2  # Estimate 20% above min
+            salary_max = salary_min * 1.2
 
-        print('extracting skills....')
-        skills = extractor.extract(job['description'])
+        logger.info(f"Extracting skills for job ID: {job.get('id', '')}")
+        skills = extractor.extract(job.get("description", ""))
 
         processed.append({
             "job_id": job.get("id", ""),
@@ -47,48 +57,54 @@ def process_jobs(raw_jobs):
             "salary_max": salary_max,
             "skills": skills,
             "description": job.get("description", ""),
-            "timestamp": datetime.now().replace(second=0, microsecond=0)
+            "timestamp": now
         })
+
+    logger.info(f"Processed {len(processed)} jobs from raw data.")
     return processed
 
+# ------------------- Save Processed Jobs to DB -------------------
 def save_to_db(processed_jobs):
-    # Create DataFrame
-    df = pd.DataFrame(processed_jobs)
-    
+    if not processed_jobs:
+        logger.warning("No processed jobs to save.")
+        return
+
     try:
-        # Create database connection
-        engine = create_engine(
-            f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-            f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-        )
-        
-        # Save to database
-        df.to_sql('jobs', engine, if_exists='append', index=False)
-        print(f"Inserted {len(df)} records to jobs table")
+        engine = get_engine()
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        jobs_table = metadata.tables.get('jobs')
+
+        if jobs_table is None:
+            raise Exception("Table 'jobs' not found in the database.")
+
+        # Remove duplicates based on job_id
+        unique_jobs = {job["job_id"]: job for job in processed_jobs}
+        logger.info(f"Saving {len(unique_jobs)} unique jobs to the database...")
+
+        with engine.begin() as conn:
+            stmt = insert(jobs_table).values(list(unique_jobs.values()))
+            stmt = stmt.on_conflict_do_nothing(index_elements=['job_id'])  # Deduplication
+            conn.execute(stmt)
+
+        logger.info(f"Inserted {len(unique_jobs)} job(s) into the database.")
     except Exception as e:
-        print(f"Error: {e}")
-        raise  # re-raise here to fail the task
+        logger.exception("Failed to save processed jobs to the database.")
+        raise
 
-
+# ------------------- Main ETL Flow -------------------
 def main():
-    # Fetch jobs from api_client.py
-    print('Fetching data from Adzuna API...')
+    logger.info("Fetching data from Adzuna API...")
     from api_client import fetch_jobs
     raw_jobs = fetch_jobs()
-    
-    # Save raw data
+
+    from utils import save_raw_data, save_processed_data
     raw_file = save_raw_data(raw_jobs)
-    
-    # Process data
+
     processed_jobs = process_jobs(raw_jobs)
-    
-    # Save processed data
     processed_file = save_processed_data(processed_jobs)
-    
-    # call the create database and table function in the db_setup file
-    create_table()
-    
-    # load the data into the table using pandas
+
+    create_table()  # Ensures DB/table exists
     save_to_db(processed_jobs)
-    
-    print("Pipeline completed successfully!")
+
+    logger.info("Pipeline completed successfully!")
