@@ -5,7 +5,7 @@ import time
 
 load_dotenv()
 
-def fetch_jobs(pages=20):
+def fetch_jobs(pages=1):
     base_url = "http://api.adzuna.com/v1/api/jobs/gb/search/"
     all_jobs = []
 
@@ -16,7 +16,7 @@ def fetch_jobs(pages=20):
             "app_key": os.getenv("ADZUNA_APP_KEY"),
             "what_or": "Data Engineer Data Scientist Data Analyst, Machine Learning Engineer Business Intelligence Data Architect Database Administrator ETL Developer Analytics Engineer",
             "max_days_old": 1,
-            "results_per_page": 50
+            "results_per_page": 2
         }
 
         try:
