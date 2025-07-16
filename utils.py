@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import json
 from datetime import datetime
+from sqlalchemy import create_engine
 
 def save_raw_data(jobs, source="adzuna", directory = "datasets/raw"):
     os.makedirs(directory, exist_ok=True)
