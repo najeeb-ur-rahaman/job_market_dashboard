@@ -15,9 +15,13 @@ default_args = {
     'email_on_retry': False
 }
 
-def run_pipeline():
-    from pipeline import main
-    main()
+def API_to_CSV():
+    from task1 import fetch_and_save_to_csv
+    fetch_and_save_to_csv()
+
+def CSV_to_DB():
+    from task2 import load_csv_to_db
+    load_csv_to_db()
 
 with DAG(
     'job_market_pipeline',
@@ -28,8 +32,16 @@ with DAG(
     catchup=False
 ) as dag:
 
-    run_task = PythonOperator(
-        task_id = 'run_pipeline',
-        python_callable=run_pipeline,
-        execution_timeout=timedelta(minutes=15)
+    API_to_CSV_task = PythonOperator(
+        task_id = 'fetch_and_save_to_csv',
+        python_callable=API_to_CSV,
+        execution_timeout=timedelta(minutes=5)
     )
+
+    CSV_to_DB_task = PythonOperator(
+    task_id = 'load_csv_to_db',
+    python_callable=CSV_to_DB,
+    execution_timeout=timedelta(minutes=15)
+    )
+
+    API_to_CSV_task >> CSV_to_DB_task

@@ -25,9 +25,3 @@ def save_processed_data(processed_jobs, source="adzuna", directory = "datasets/p
     df.to_csv(filename, index=False)
     print(f"Saved processed data to {filename}")
     return filename
-
-def get_engine():
-    return create_engine(
-        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-    )
