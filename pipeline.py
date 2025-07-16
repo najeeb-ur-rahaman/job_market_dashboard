@@ -1,12 +1,12 @@
 import os
 from utils import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from db_setup import create_table
 from sqlalchemy import create_engine
 
 def process_jobs(raw_jobs):
     processed = []
-    today = datetime.utcnow().date()
+    yesterday = datetime.utcnow().date() -  timedelta(days=1)
 
     for job in raw_jobs:
         # Parse created date
@@ -16,7 +16,7 @@ def process_jobs(raw_jobs):
         except (ValueError, TypeError):
             continue  # Skip if invalid or missing date
 
-        if created_date != today:
+        if created_date != yesterday:
             continue  # Skip if not today's job
         
         # Handle salary estimation
