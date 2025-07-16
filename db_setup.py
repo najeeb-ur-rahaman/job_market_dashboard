@@ -28,7 +28,9 @@ def jobs_table():
             category VARCHAR(100),
             salary_min FLOAT,
             salary_max FLOAT,
-            description TEXT
+            skills TEXT,
+            description TEXT,
+            timestamp TIMESTAMP
         );
         """)
         conn.commit()

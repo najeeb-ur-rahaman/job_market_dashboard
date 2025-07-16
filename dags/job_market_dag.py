@@ -31,5 +31,5 @@ with DAG(
     run_task = PythonOperator(
         task_id = 'run_pipeline',
         python_callable=run_pipeline,
-        execution_timeout=timedelta(minutes=10)
+        execution_timeout=timedelta(minutes=15)
     )

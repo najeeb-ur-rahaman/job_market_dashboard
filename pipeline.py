@@ -3,6 +3,9 @@ from utils import *
 from datetime import datetime, timedelta
 from db_setup import create_table
 from sqlalchemy import create_engine
+from skill_extractor import SkillExtractor
+
+extractor = SkillExtractor()
 
 def process_jobs(raw_jobs):
     processed = []
@@ -28,6 +31,9 @@ def process_jobs(raw_jobs):
         elif salary_max is None and salary_min is not None:
             salary_max = salary_min * 1.2  # Estimate 20% above min
 
+        print('extracting skills....')
+        skills = extractor.extract(job['description'])
+
         processed.append({
             "job_id": job.get("id", ""),
             "title": job.get("title", ""),
@@ -39,8 +45,9 @@ def process_jobs(raw_jobs):
             "category": job.get("category", {}).get("label", ""),
             "salary_min": salary_min,
             "salary_max": salary_max,
+            "skills": skills,
             "description": job.get("description", ""),
-            "timestamp": pd.to_datetime('today').strftime('%d-%m-%Y %H:%M')
+            "timestamp": datetime.now().replace(second=0, microsecond=0)
         })
     return processed
 
@@ -60,6 +67,8 @@ def save_to_db(processed_jobs):
         print(f"Inserted {len(df)} records to jobs table")
     except Exception as e:
         print(f"Error: {e}")
+        raise  # re-raise here to fail the task
+
 
 def main():
     # Fetch jobs from api_client.py
