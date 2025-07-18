@@ -17,3 +17,5 @@ tzdata
 urllib3
 transformers
 torch
+streamlit
+plotly
