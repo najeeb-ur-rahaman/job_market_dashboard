@@ -1,13 +1,16 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from dotenv import load_dotenv
+from utils import get_engine
 
+load_dotenv()
 # Load data
-@st.cache_data
-def load_data():
-    return pd.read_csv("data-1752865022215.csv")
+engine = get_engine()
 
-df = load_data()
+df = pd.read_sql("SELECT * FROM jobs", engine)
+
 df['created'] = pd.to_datetime(df['created'])
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
@@ -90,14 +93,20 @@ with col1:
 with col2:
     st.subheader("💰 Salary Distribution")
 
+    # Filter out outliers using percentiles
+    q_low = filtered_df['salary_max'].quantile(0.05)
+    q_high = filtered_df['salary_max'].quantile(0.95)
+    filtered_salaries = filtered_df[(filtered_df['salary_max'] >= q_low) & (filtered_df['salary_max'] <= q_high)]
+
     fig_salary = px.histogram(
-        filtered_df,
+        filtered_salaries,
         x='salary_max',
         nbins=10,
-        title="Distribution of Max Salaries",
+        title="Distribution of Max Salaries (5th–95th Percentile)",
         labels={'salary_max': 'Max Salary'},
         color_discrete_sequence=['teal']
     )
+
     st.plotly_chart(fig_salary, use_container_width=True)
 
     st.subheader("🏙️ Jobs by Location")
