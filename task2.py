@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, inspect
 from skill_extractor import SkillExtractor
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import create_engine, Table, MetaData
+from utils import get_engine
 
 logger = logging.getLogger(__name__)
 def extract_skills_from_csv(df):
@@ -32,10 +33,7 @@ def save_to_db(df):
         logger.info("removing the duplicated within the dataframe")
         df.drop_duplicates(subset="job_id", inplace=True)
         logger.info("Creating engine...")
-        engine = create_engine(
-            f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-            f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-        )
+        engine = get_engine()
 
         logger.info("Preparing insert with ON CONFLICT DO NOTHING...")
         metadata = MetaData()
