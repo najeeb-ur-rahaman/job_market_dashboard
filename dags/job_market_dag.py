@@ -27,7 +27,7 @@ with DAG(
     'job_market_pipeline',
     default_args=default_args,
     description='Daily job market data pipeline',
-    schedule_interval='0 22 * * *',
+    schedule_interval='0 20 * * *',
     start_date=datetime(2025,7,15),
     catchup=False
 ) as dag:
