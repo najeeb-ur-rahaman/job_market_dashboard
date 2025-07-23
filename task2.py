@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 from datetime import datetime
-from jobs_table import create_table
+from jobs_table import jobs_table
 from sqlalchemy import create_engine, inspect
 from skill_extractor import SkillExtractor
 from sqlalchemy.dialects.postgresql import insert
@@ -33,11 +33,12 @@ def save_to_db(df):
         logger.info("removing the duplicated within the dataframe")
         df.drop_duplicates(subset="job_id", inplace=True)
         logger.info("Creating engine...")
+
         engine = get_engine()
 
-        logger.info("Preparing insert with ON CONFLICT DO NOTHING...")
+        logger.info("Preparing insert with ON CONFLICT DO NOTHING into NEON...")
         metadata = MetaData()
-        jobs_table = Table("jobs", metadata, autoload_with=engine)
+        jobs_table = Table("jobs", metadata, schema="dev", autoload_with=engine)
 
         stmt = insert(jobs_table).values(df.to_dict(orient='records'))
         stmt = stmt.on_conflict_do_nothing(index_elements=["job_id"])  # assumes job_id is unique or primary key
@@ -49,6 +50,7 @@ def save_to_db(df):
     except Exception as e:
         logger.error(f"Failed to save to database: {e}")
         raise
+
 def load_csv_to_db():
     
     today_str = datetime.today().strftime("%Y%m%d")
@@ -60,7 +62,7 @@ def load_csv_to_db():
     if os.path.exists(filepath):
         skills_df = extract_skills_from_csv(pd.read_csv(filepath))
 
-        create_table()  # Ensures DB/table exists
+        jobs_table()  # Ensures DB/table exists
         save_to_db(skills_df)
 
         logger.info("task2 completed successfully!")

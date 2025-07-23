@@ -9,10 +9,7 @@ sys.path.insert(0, '/opt/airflow/project')
 default_args = {
     'owner': 'airflow',
     'retries': 0,
-    'retry_delay': timedelta(minutes=5),
-    'email': ['snajeebr07@gmail.com'],
-    'email_on_failure': True,
-    'email_on_retry': False
+    'retry_delay': timedelta(minutes=5)
 }
 
 def API_to_CSV():
