@@ -9,7 +9,7 @@ load_dotenv()
 # Load data
 engine = get_engine()
 
-df = pd.read_sql("SELECT * FROM jobs", engine)
+df = pd.read_sql("SELECT * FROM dev.jobs", engine)
 
 df['created'] = pd.to_datetime(df['created'])
 df['timestamp'] = pd.to_datetime(df['timestamp'])
